@@ -3,6 +3,7 @@ package com.example.r2dbc.example;
 import junit.framework.TestCase;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -60,6 +61,7 @@ class R2DbcExampleApplicationTests {
 		log.info("Row insertion complete");
 
 		Collection<TestCase> testCases = new ArrayList<>();
+		Collection<TestCase> unverified = new ArrayList<>();
 
 		for (int i = 1; i < 15; i++) {
 			testCases.add(queryAndCancel(i));
@@ -69,14 +71,14 @@ class R2DbcExampleApplicationTests {
 			try {
 				log.info("Verifying test case: {}", testCase);
 				testCase.getStepVerifier().verify(Duration.ofSeconds(3));
-				testCase.setVerified(true);
 			} catch (Throwable e) {
 				log.warn("Error for {}: {}", testCase, e.getMessage());
+				unverified.add(testCase);
 			}
 		}
 
-		log.info("Unverified test cases: {}", testCases.stream().filter(t -> !t.isVerified()).collect(Collectors.toList()));
-		log.info("Done");
+		log.info("Unverified test cases: {}", unverified);
+		Assertions.assertTrue(unverified.isEmpty());
 	}
 
 	private TestCase queryAndCancel(int id) {
@@ -118,7 +120,6 @@ class R2DbcExampleApplicationTests {
 		private final int id;
 		private final int limit;
 		private final AtomicLong count;
-		private boolean verified;
 	}
 
 	@TestConfiguration
